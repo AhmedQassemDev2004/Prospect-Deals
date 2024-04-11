@@ -20,7 +20,7 @@ public class Main extends Application {
             mainController.setPrimaryStage(primaryStage);
             Scene scene = new Scene(root);
             primaryStage.setScene(scene);
-            primaryStage.setTitle("Leads Cutter");
+            primaryStage.setTitle("Prospect Deals");
             primaryStage.show();
 
         } catch (IOException e) {

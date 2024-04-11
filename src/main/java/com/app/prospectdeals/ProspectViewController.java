@@ -7,15 +7,14 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import org.apache.poi.*;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
@@ -42,6 +41,10 @@ public class ProspectViewController {
     Button addAnother;
     @FXML
     Button prospect;
+    @FXML
+    TextField outputPath;
+
+    Config config = new Config();
 
     private ObservableList<Directory> directoryList = FXCollections.observableArrayList();
 
@@ -76,9 +79,16 @@ public class ProspectViewController {
         numberOfFilesColumn.setCellValueFactory(new PropertyValueFactory<>("numberOfFiles"));
 
         tableView.getColumns().addAll(nameColumn, numberOfFilesColumn);
+
+        this.outputPath.setText(config.OUTPUT_PATH);
     }
 
     public void onProspect(ActionEvent e) {
+        if (this.outputPath.getText().isEmpty()) {
+            new Alert(Alert.AlertType.ERROR, "Select an output path").show();
+            return;
+        }
+
         Workbook newWorkbook = new XSSFWorkbook();
         Sheet newSheet = newWorkbook.createSheet("Filtered Rows");
         int newRowNum = 0;
@@ -167,8 +177,7 @@ public class ProspectViewController {
             }
         }
 
-        String outputPath = "Filtered_Rows.xlsx"; // TODO: Edit the output file path
-        try (FileOutputStream outputStream = new FileOutputStream(outputPath)) {
+        try (FileOutputStream outputStream = new FileOutputStream(outputPath.getText() + "/Prospect Sheet.xlsx")) {
             newWorkbook.write(outputStream);
             newWorkbook.close();
 
@@ -206,6 +215,18 @@ public class ProspectViewController {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
+        }
+    }
+
+    public void onChangeOutputPath(ActionEvent e) {
+        var directoryChooser = new DirectoryChooser();
+
+        File dir = directoryChooser.showDialog(primaryStage);
+
+        if (dir != null) {
+            this.config.OUTPUT_PATH = dir.getAbsolutePath();
+            this.outputPath.setText(this.config.OUTPUT_PATH);
+            this.config.save();
         }
     }
 
