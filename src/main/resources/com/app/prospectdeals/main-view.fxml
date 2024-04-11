@@ -21,7 +21,7 @@
                 </Text>
             </children>
         </Pane>
-        <Button fx:id="selectFilesButton" layoutX="206.0" layoutY="307.0" mnemonicParsing="false" onAction="#handleSelectFilesButtonClick" prefHeight="54.0" prefWidth="235.0" style="-fx-background-color: #33b864;" text="Select Folders" textFill="WHITE">
+        <Button fx:id="selectFilesButton" layoutX="206.0" layoutY="307.0" mnemonicParsing="false" onAction="#handleSelectFilesButtonClick" prefHeight="54.0" prefWidth="235.0" style="-fx-background-color: linear-gradient(to right, #191970, #8A2BE2);" text="Select Folders" textFill="WHITE">
             <font>
                 <Font size="25.0" />
             </font>

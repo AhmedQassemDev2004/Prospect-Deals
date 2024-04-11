@@ -7,22 +7,22 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="775.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.app.prospectdeals.ProspectViewController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="775.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.app.prospectdeals.ProspectViewController">
     <children>
-        <TableView fx:id="tableView" layoutX="-3.0" prefHeight="400.0" prefWidth="477.0" />
-        <Button fx:id="addAnother" layoutX="514.0" layoutY="14.0" mnemonicParsing="false" onAction="#onAddFolder" prefHeight="47.0" prefWidth="207.0" style="-fx-background-color: #33b864;" text="Add Another Folder" textFill="WHITE">
+        <TableView fx:id="tableView" layoutX="-3.0" prefHeight="400.0" prefWidth="301.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="-3.0" AnchorPane.rightAnchor="477.0" AnchorPane.topAnchor="0.0" />
+        <Button fx:id="addAnother" layoutX="514.0" layoutY="14.0" mnemonicParsing="false" onAction="#onAddFolder" prefHeight="47.0" prefWidth="207.0" style="-fx-background-color: linear-gradient(to right, #191970, #8A2BE2);" text="Add Folder" textFill="WHITE" AnchorPane.rightAnchor="54.0" AnchorPane.topAnchor="14.0">
             <font>
                 <Font size="19.0" />
             </font>
         </Button>
-        <Button fx:id="prospect" layoutX="500.0" layoutY="336.0" mnemonicParsing="false" onAction="#onProspect" prefHeight="38.0" prefWidth="235.0" style="-fx-background-color: #33b864;" text="Generate Prospect Sheet" textAlignment="CENTER" textFill="WHITE" wrapText="true">
+        <Button fx:id="prospect" layoutX="514.0" layoutY="338.0" mnemonicParsing="false" onAction="#onProspect" prefHeight="38.0" prefWidth="235.0" style="-fx-background-color: linear-gradient(to right, #191970, #8A2BE2);" text="Generate Prospect Sheet" textAlignment="CENTER" textFill="WHITE" wrapText="true" AnchorPane.bottomAnchor="24.0" AnchorPane.rightAnchor="40.0">
             <font>
                 <Font name="System Bold" size="17.0" />
             </font>
         </Button>
-      <TextField fx:id="outputPath" editable="false" layoutX="500.0" layoutY="250.0" prefHeight="31.0" prefWidth="235.0" />
-      <Text layoutX="500.0" layoutY="245.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Output path:" />
-      <Button layoutX="660.0" layoutY="288.0" mnemonicParsing="false" onAction="#onChangeOutputPath" prefHeight="31.0" prefWidth="75.0" style="-fx-background-color: #33b864;" text="Change" textAlignment="CENTER" textFill="WHITE" wrapText="true">
+      <TextField fx:id="outputPath" editable="false" layoutX="500.0" layoutY="250.0" prefHeight="31.0" prefWidth="235.0" AnchorPane.bottomAnchor="119.0" AnchorPane.rightAnchor="40.0" />
+      <Text layoutX="500.0" layoutY="245.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Output Folder path:" AnchorPane.bottomAnchor="151.0" AnchorPane.rightAnchor="170.6796875" />
+      <Button layoutX="660.0" layoutY="289.0" mnemonicParsing="false" onAction="#onChangeOutputPath" prefHeight="31.0" prefWidth="75.0" style="-fx-background-color: #FF0000;" text="Change" textAlignment="CENTER" textFill="WHITE" wrapText="true" AnchorPane.bottomAnchor="80.0" AnchorPane.rightAnchor="40.0">
          <font>
             <Font size="14.0" />
          </font>
