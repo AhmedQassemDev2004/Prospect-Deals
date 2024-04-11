@@ -4,6 +4,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -76,14 +79,14 @@ public class ProspectViewController {
     }
 
     public void onProspect(ActionEvent e) {
-        Workbook newWorkbook = new XSSFWorkbook(); // Create a new workbook outside the loop
+        Workbook newWorkbook = new XSSFWorkbook();
         Sheet newSheet = newWorkbook.createSheet("Filtered Rows");
         int newRowNum = 0;
         boolean headerAdded = false;
 
         for (Directory dir : directoryList) {
-            // Get the list of Excel files in the directory
-            File[] excelFiles = new File(dir.getPath()).listFiles(file -> file.isFile() && file.getName().toLowerCase().endsWith(".xlsx"));
+            File[] excelFiles = new File(dir.getPath())
+                    .listFiles(file -> file.isFile() && file.getName().toLowerCase().endsWith(".xlsx"));
 
             if (excelFiles != null && Arrays.stream(excelFiles).findAny().isPresent()) {
 
@@ -100,7 +103,6 @@ public class ProspectViewController {
                                 if (oldCell != null) {
                                     newCell.setCellValue(oldCell.getStringCellValue());
 
-                                    // Copy cell style
                                     CellStyle oldCellStyle = oldCell.getCellStyle();
                                     CellStyle newCellStyle = newWorkbook.createCellStyle();
                                     newCellStyle.cloneStyleFrom(oldCellStyle);
@@ -117,20 +119,15 @@ public class ProspectViewController {
 
                 for (File excelFile : excelFiles) {
                     try (Workbook workbook = WorkbookFactory.create(excelFile)) {
-                        // Get the first sheet in the workbook
                         Sheet sheet = workbook.getSheetAt(0);
 
-
-                        // Iterate over the rows in the sheet starting from the second row
                         for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
                             Row row = sheet.getRow(rowIndex);
                             if (row != null) {
-                                // Get the value of the 7th column in each row
-                                Cell cell = row.getCell(6); // 0-based index
+                                Cell cell = row.getCell(6);
                                 if (cell != null && cell.getCellType() == CellType.STRING) {
                                     String value = cell.getStringCellValue();
                                     if ("CB".equalsIgnoreCase(value) || "PR".equalsIgnoreCase(value)) {
-                                        // Copy the row to the new sheet from 1st column to 10th column
                                         Row newRow = newSheet.createRow(newRowNum++);
                                         for (int i = 0; i < 10; i++) {
                                             Cell oldCell = row.getCell(i);
@@ -150,11 +147,9 @@ public class ProspectViewController {
                                                         newCell.setCellFormula(oldCell.getCellFormula());
                                                         break;
                                                     default:
-                                                        // Handle other cell types if needed
                                                         break;
                                                 }
 
-                                                // Copy cell style
                                                 CellStyle oldCellStyle = oldCell.getCellStyle();
                                                 CellStyle newCellStyle = newWorkbook.createCellStyle();
                                                 newCellStyle.cloneStyleFrom(oldCellStyle);
@@ -172,15 +167,23 @@ public class ProspectViewController {
             }
         }
 
-        // Write the new workbook to a file
-        String outputPath = "Filtered_Rows.xlsx"; // Specify the output file path
+        String outputPath = "Filtered_Rows.xlsx"; // TODO: Edit the output file path
         try (FileOutputStream outputStream = new FileOutputStream(outputPath)) {
             newWorkbook.write(outputStream);
+            newWorkbook.close();
+
+            // Navigate to MainView
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("MainView.fxml"));
+            Parent root = loader.load();
+            MainViewController controller = loader.getController();
+            controller.initialize();
+
+            primaryStage.setScene(new Scene(root));
+            primaryStage.show();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
     }
-
 
     public void onAddFolder(ActionEvent e) {
         DirectoryChooser directoryChooser = new DirectoryChooser();
