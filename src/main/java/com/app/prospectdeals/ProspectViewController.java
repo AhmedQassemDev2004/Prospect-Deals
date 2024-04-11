@@ -105,6 +105,7 @@ public class ProspectViewController {
                         Sheet sheet = workbook.getSheetAt(0);
 
                         Row headerRow = sheet.getRow(0);
+                        CellStyle oldCellStyle = null;
                         if (headerRow != null) {
                             Row newHeaderRow = newSheet.createRow(newRowNum++);
                             for (int i = 0; i < headerRow.getLastCellNum(); i++) {
@@ -113,11 +114,19 @@ public class ProspectViewController {
                                 if (oldCell != null) {
                                     newCell.setCellValue(oldCell.getStringCellValue());
 
-                                    CellStyle oldCellStyle = oldCell.getCellStyle();
+                                    oldCellStyle = oldCell.getCellStyle();
                                     CellStyle newCellStyle = newWorkbook.createCellStyle();
                                     newCellStyle.cloneStyleFrom(oldCellStyle);
                                     newCell.setCellStyle(newCellStyle);
                                 }
+                            }
+                            Cell baseFileHeader = newHeaderRow.createCell(headerRow.getLastCellNum());
+                            baseFileHeader.setCellValue("Base File");
+                            if (oldCellStyle != null) {
+                                // Clone the style from oldCellStyle and apply it to baseFileHeader
+                                CellStyle newCellStyle = newWorkbook.createCellStyle();
+                                newCellStyle.cloneStyleFrom(oldCellStyle);
+                                baseFileHeader.setCellStyle(newCellStyle);
                             }
                         }
 
@@ -126,6 +135,7 @@ public class ProspectViewController {
                         ex.printStackTrace();
                     }
                 }
+
 
                 for (File excelFile : excelFiles) {
                     try (Workbook workbook = WorkbookFactory.create(excelFile)) {
@@ -166,6 +176,9 @@ public class ProspectViewController {
                                                 newCell.setCellStyle(newCellStyle);
                                             }
                                         }
+
+                                        Cell baseFileCell = newRow.createCell(10);
+                                        baseFileCell.setCellValue(excelFile.getName());
                                     }
                                 }
                             }
@@ -177,6 +190,11 @@ public class ProspectViewController {
             }
         }
 
+        for (int colIndex = 0; colIndex < newSheet.getRow(0).getLastCellNum(); colIndex++) {
+            newSheet.autoSizeColumn(colIndex);
+        }
+
+        
         try (FileOutputStream outputStream = new FileOutputStream(outputPath.getText() + "/Prospect Sheet.xlsx")) {
             newWorkbook.write(outputStream);
             newWorkbook.close();
