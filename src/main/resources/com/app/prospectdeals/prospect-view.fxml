@@ -13,9 +13,9 @@
                 <Font size="19.0" />
             </font>
         </Button>
-        <Button fx:id="prospect" layoutX="500.0" layoutY="316.0" mnemonicParsing="false" onAction="#onProspect" prefHeight="47.0" prefWidth="207.0" style="-fx-background-color: #33b864;" text="Prospect" textFill="WHITE">
+        <Button fx:id="prospect" layoutX="500.0" layoutY="285.0" mnemonicParsing="false" onAction="#onProspect" prefHeight="78.0" prefWidth="207.0" style="-fx-background-color: #33b864;" text="Generate Prospect Sheet" textAlignment="CENTER" textFill="WHITE" wrapText="true">
             <font>
-                <Font name="System Bold" size="21.0" />
+                <Font name="System Bold" size="17.0" />
             </font>
         </Button>
     </children>

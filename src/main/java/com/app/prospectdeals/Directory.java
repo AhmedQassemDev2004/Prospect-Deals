@@ -4,6 +4,8 @@ public class Directory {
     private String name;
     private int numberOfFiles;
 
+    public String path;
+
     public Directory() {
 
     }
@@ -27,5 +29,13 @@ public class Directory {
 
     public void setNumberOfFiles(int numberOfFiles) {
         this.numberOfFiles = numberOfFiles;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
     }
 }

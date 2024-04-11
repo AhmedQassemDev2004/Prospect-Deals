@@ -10,17 +10,27 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import org.apache.poi.*;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class ProspectViewController {
     Stage primaryStage;
     File selectedDir;
+
+    List<Directory> dirs;
 
     @FXML
     TableView<Directory> tableView;
@@ -40,29 +50,20 @@ public class ProspectViewController {
         dir.setName(selectedDir.getName());
 
         List<Path> files = Files.list(Paths.get(selectedDir.getAbsolutePath())).toList();
-        int numberOfFiles = 0;
 
-        for (Path file : files) {
-            List<String> fileSplit = List.of(file.getFileName().toString().split("\\."));
-            if (!fileSplit.isEmpty()) {
-                String exec = fileSplit.get(fileSplit.size() - 1);
-
-                if (exec.equals("xlsx")) {
-                    numberOfFiles++;
-                }
-            }
-        }
+        int numberOfFiles = (int) Files.list(selectedDir.toPath())
+                .filter(path -> path.toString().toLowerCase().endsWith(".xlsx"))
+                .count();
 
         dir.setNumberOfFiles(numberOfFiles);
 
-        // Add dir to the ObservableList
+        dir.setPath(selectedDir.getAbsolutePath());
+
         directoryList.add(dir);
 
-        // Bind the ObservableList to the TableView
         tableView.setItems(directoryList);
     }
 
-    // Initialize method where you set up your TableView columns
     @FXML
     private void initialize() {
         TableColumn<Directory, String> nameColumn = new TableColumn<>("Name");
@@ -74,33 +75,82 @@ public class ProspectViewController {
         tableView.getColumns().addAll(nameColumn, numberOfFilesColumn);
     }
 
-    // Other methods...
-
     public void onProspect(ActionEvent e) {
-        
+        for (Directory dir : directoryList) {
+            List<File> excelFiles = Arrays.stream(Objects.requireNonNull((new File(dir.getPath())).listFiles(file -> file.isFile() && file.getName().toLowerCase().endsWith(".xlsx")))).toList();
+
+            if (!excelFiles.isEmpty()) {
+                for (File excelFile : excelFiles) {
+                    try (Workbook workbook = WorkbookFactory.create(excelFile)) {
+                        Workbook newWorkbook = new XSSFWorkbook();
+                        Sheet newSheet = newWorkbook.createSheet("Prospected Sheet");
+                        int newRowNum = 0;
+
+                        Sheet sheet = workbook.getSheetAt(0);
+
+                        for (Row row : sheet) {
+                            Cell cell = row.getCell(6);
+                            if (cell != null && cell.getCellType() == CellType.STRING) {
+                                String value = cell.getStringCellValue();
+                                if ("CB".equalsIgnoreCase(value) || "PR".equalsIgnoreCase(value)) {
+                                    Row newRow = newSheet.createRow(newRowNum++);
+                                    System.out.println(row.getCell(9));
+                                    for (int i = 0; i < 10; i++) {
+                                        Cell oldCell = row.getCell(i);
+                                        Cell newCell = newRow.createCell(i);
+                                        if (oldCell != null) {
+                                            switch (oldCell.getCellType()) {
+                                                case STRING:
+                                                    newCell.setCellValue(oldCell.getStringCellValue());
+                                                    break;
+                                                case NUMERIC:
+                                                    newCell.setCellValue(oldCell.getNumericCellValue());
+                                                    break;
+                                                case BOOLEAN:
+                                                    newCell.setCellValue(oldCell.getBooleanCellValue());
+                                                    break;
+                                                case FORMULA:
+                                                    newCell.setCellFormula(oldCell.getCellFormula());
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        String outputPath = excelFile.getParent() + File.separator + "Prospected_" + excelFile.getName();
+                        try (FileOutputStream outputStream = new FileOutputStream(outputPath)) {
+                            newWorkbook.write(outputStream);
+                        }
+                    } catch (IOException | EncryptedDocumentException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
+
     public void onAddFolder(ActionEvent e) {
-        // Create a directory chooser
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Select a Directory");
 
-        // Show the directory chooser dialog
         File selectedDirectory = directoryChooser.showDialog(primaryStage);
 
         if (selectedDirectory != null) {
             try {
-                // Create a new Directory object for the selected directory
                 Directory newDir = new Directory();
                 newDir.setName(selectedDirectory.getName());
 
-                // Count the number of Excel files in the selected directory
                 int numberOfFiles = (int) Files.list(selectedDirectory.toPath())
                         .filter(path -> path.toString().toLowerCase().endsWith(".xlsx"))
                         .count();
                 newDir.setNumberOfFiles(numberOfFiles);
 
-                // Add the new directory to the table view
+                newDir.setPath(selectedDirectory.getAbsolutePath());
                 directoryList.add(newDir);
             } catch (IOException ex) {
                 ex.printStackTrace();
