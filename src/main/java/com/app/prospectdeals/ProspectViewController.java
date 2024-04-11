@@ -76,60 +76,108 @@ public class ProspectViewController {
     }
 
     public void onProspect(ActionEvent e) {
+        Workbook newWorkbook = new XSSFWorkbook(); // Create a new workbook outside the loop
+        Sheet newSheet = newWorkbook.createSheet("Filtered Rows");
+        int newRowNum = 0;
+        boolean headerAdded = false;
+
         for (Directory dir : directoryList) {
-            List<File> excelFiles = Arrays.stream(Objects.requireNonNull((new File(dir.getPath())).listFiles(file -> file.isFile() && file.getName().toLowerCase().endsWith(".xlsx")))).toList();
+            // Get the list of Excel files in the directory
+            File[] excelFiles = new File(dir.getPath()).listFiles(file -> file.isFile() && file.getName().toLowerCase().endsWith(".xlsx"));
 
-            if (!excelFiles.isEmpty()) {
-                for (File excelFile : excelFiles) {
-                    try (Workbook workbook = WorkbookFactory.create(excelFile)) {
-                        Workbook newWorkbook = new XSSFWorkbook();
-                        Sheet newSheet = newWorkbook.createSheet("Prospected Sheet");
-                        int newRowNum = 0;
+            if (excelFiles != null && Arrays.stream(excelFiles).findAny().isPresent()) {
 
+                if (!headerAdded) {
+                    try (Workbook workbook = WorkbookFactory.create(excelFiles[0])) {
                         Sheet sheet = workbook.getSheetAt(0);
 
-                        for (Row row : sheet) {
-                            Cell cell = row.getCell(6);
-                            if (cell != null && cell.getCellType() == CellType.STRING) {
-                                String value = cell.getStringCellValue();
-                                if ("CB".equalsIgnoreCase(value) || "PR".equalsIgnoreCase(value)) {
-                                    Row newRow = newSheet.createRow(newRowNum++);
-                                    System.out.println(row.getCell(9));
-                                    for (int i = 0; i < 10; i++) {
-                                        Cell oldCell = row.getCell(i);
-                                        Cell newCell = newRow.createCell(i);
-                                        if (oldCell != null) {
-                                            switch (oldCell.getCellType()) {
-                                                case STRING:
-                                                    newCell.setCellValue(oldCell.getStringCellValue());
-                                                    break;
-                                                case NUMERIC:
-                                                    newCell.setCellValue(oldCell.getNumericCellValue());
-                                                    break;
-                                                case BOOLEAN:
-                                                    newCell.setCellValue(oldCell.getBooleanCellValue());
-                                                    break;
-                                                case FORMULA:
-                                                    newCell.setCellFormula(oldCell.getCellFormula());
-                                                    break;
-                                                default:
-                                                    break;
+                        Row headerRow = sheet.getRow(0);
+                        if (headerRow != null) {
+                            Row newHeaderRow = newSheet.createRow(newRowNum++);
+                            for (int i = 0; i < headerRow.getLastCellNum(); i++) {
+                                Cell oldCell = headerRow.getCell(i);
+                                Cell newCell = newHeaderRow.createCell(i);
+                                if (oldCell != null) {
+                                    newCell.setCellValue(oldCell.getStringCellValue());
+
+                                    // Copy cell style
+                                    CellStyle oldCellStyle = oldCell.getCellStyle();
+                                    CellStyle newCellStyle = newWorkbook.createCellStyle();
+                                    newCellStyle.cloneStyleFrom(oldCellStyle);
+                                    newCell.setCellStyle(newCellStyle);
+                                }
+                            }
+                        }
+
+                        headerAdded = true;
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+
+                for (File excelFile : excelFiles) {
+                    try (Workbook workbook = WorkbookFactory.create(excelFile)) {
+                        // Get the first sheet in the workbook
+                        Sheet sheet = workbook.getSheetAt(0);
+
+
+                        // Iterate over the rows in the sheet starting from the second row
+                        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                            Row row = sheet.getRow(rowIndex);
+                            if (row != null) {
+                                // Get the value of the 7th column in each row
+                                Cell cell = row.getCell(6); // 0-based index
+                                if (cell != null && cell.getCellType() == CellType.STRING) {
+                                    String value = cell.getStringCellValue();
+                                    if ("CB".equalsIgnoreCase(value) || "PR".equalsIgnoreCase(value)) {
+                                        // Copy the row to the new sheet from 1st column to 10th column
+                                        Row newRow = newSheet.createRow(newRowNum++);
+                                        for (int i = 0; i < 10; i++) {
+                                            Cell oldCell = row.getCell(i);
+                                            Cell newCell = newRow.createCell(i);
+                                            if (oldCell != null) {
+                                                switch (oldCell.getCellType()) {
+                                                    case STRING:
+                                                        newCell.setCellValue(oldCell.getStringCellValue());
+                                                        break;
+                                                    case NUMERIC:
+                                                        newCell.setCellValue(oldCell.getNumericCellValue());
+                                                        break;
+                                                    case BOOLEAN:
+                                                        newCell.setCellValue(oldCell.getBooleanCellValue());
+                                                        break;
+                                                    case FORMULA:
+                                                        newCell.setCellFormula(oldCell.getCellFormula());
+                                                        break;
+                                                    default:
+                                                        // Handle other cell types if needed
+                                                        break;
+                                                }
+
+                                                // Copy cell style
+                                                CellStyle oldCellStyle = oldCell.getCellStyle();
+                                                CellStyle newCellStyle = newWorkbook.createCellStyle();
+                                                newCellStyle.cloneStyleFrom(oldCellStyle);
+                                                newCell.setCellStyle(newCellStyle);
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-
-                        String outputPath = excelFile.getParent() + File.separator + "Prospected_" + excelFile.getName();
-                        try (FileOutputStream outputStream = new FileOutputStream(outputPath)) {
-                            newWorkbook.write(outputStream);
-                        }
                     } catch (IOException | EncryptedDocumentException ex) {
                         ex.printStackTrace();
                     }
                 }
             }
+        }
+
+        // Write the new workbook to a file
+        String outputPath = "Filtered_Rows.xlsx"; // Specify the output file path
+        try (FileOutputStream outputStream = new FileOutputStream(outputPath)) {
+            newWorkbook.write(outputStream);
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 
