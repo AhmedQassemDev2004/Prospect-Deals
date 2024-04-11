@@ -173,7 +173,7 @@ public class ProspectViewController {
             newWorkbook.close();
 
             // Navigate to MainView
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("MainView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("main-view.fxml"));
             Parent root = loader.load();
             MainViewController controller = loader.getController();
             controller.initialize();
