@@ -136,7 +136,6 @@ public class ProspectViewController {
                     }
                 }
 
-
                 for (File excelFile : excelFiles) {
                     try (Workbook workbook = WorkbookFactory.create(excelFile)) {
                         Sheet sheet = workbook.getSheetAt(0);
@@ -194,7 +193,6 @@ public class ProspectViewController {
             newSheet.autoSizeColumn(colIndex);
         }
 
-        
         try (FileOutputStream outputStream = new FileOutputStream(outputPath.getText() + "/Prospect Sheet.xlsx")) {
             newWorkbook.write(outputStream);
             newWorkbook.close();
@@ -207,6 +205,7 @@ public class ProspectViewController {
 
             primaryStage.setScene(new Scene(root));
             primaryStage.show();
+            controller.setPrimaryStage(primaryStage);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
