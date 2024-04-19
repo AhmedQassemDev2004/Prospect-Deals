@@ -1,18 +1,15 @@
 package com.app.prospectdeals;
 
-public class Directory {
+public class File {
     private String name;
-    private int numberOfFiles;
-
     public String path;
 
-    public Directory() {
+    public File() {
 
     }
 
-    public Directory(String name, int numberOfFiles) {
+    public File(String name) {
         this.name = name;
-        this.numberOfFiles = numberOfFiles;
     }
 
     public String getName() {
@@ -21,14 +18,6 @@ public class Directory {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public int getNumberOfFiles() {
-        return numberOfFiles;
-    }
-
-    public void setNumberOfFiles(int numberOfFiles) {
-        this.numberOfFiles = numberOfFiles;
     }
 
     public String getPath() {

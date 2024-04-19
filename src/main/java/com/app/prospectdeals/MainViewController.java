@@ -28,17 +28,17 @@ public class MainViewController {
 
     @FXML
     private void handleSelectFilesButtonClick(ActionEvent event) throws IOException {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Select folders");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select excel files");
 
-        File selectedDir = directoryChooser.showDialog(primaryStage);
+        List<File> selectedFiles = fileChooser.showOpenMultipleDialog(primaryStage);
 
-        if (selectedDir != null) {
+        if (selectedFiles != null) {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("prospect-view.fxml"));
             Parent root = loader.load();
 
             ProspectViewController prospectViewController = loader.getController();
-            prospectViewController.initData(selectedDir, primaryStage);
+            prospectViewController.initData(selectedFiles, primaryStage);
 
             Scene scene = new Scene(root);
             primaryStage.setScene(scene);

@@ -10,9 +10,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.poi.*;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -20,65 +20,45 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class ProspectViewController {
     Stage primaryStage;
-    File selectedDir;
-
-    List<Directory> dirs;
+    List<File> selectedFiles;
 
     @FXML
-    TableView<Directory> tableView;
+    TableView<File> tableView;
 
     @FXML
-    Button addAnother;
+    Button addFiles;
     @FXML
     Button prospect;
     @FXML
     TextField outputPath;
 
+    @FXML
+    TextField additionalText;
+
     Config config = new Config();
 
-    private ObservableList<Directory> directoryList = FXCollections.observableArrayList();
+    private ObservableList<File> files = FXCollections.observableArrayList();
 
-    public void initData(File selectedDir, Stage primaryStage) throws IOException {
+    public void initData(List<File> selectedFiles, Stage primaryStage) throws IOException {
         this.primaryStage = primaryStage;
-        this.selectedDir = selectedDir;
+        this.selectedFiles = selectedFiles;
 
-        Directory dir = new Directory();
-        dir.setName(selectedDir.getName());
+        this.files.addAll(selectedFiles);
 
-        List<Path> files = Files.list(Paths.get(selectedDir.getAbsolutePath())).toList();
-
-        int numberOfFiles = (int) Files.list(selectedDir.toPath())
-                .filter(path -> path.toString().toLowerCase().endsWith(".xlsx"))
-                .count();
-
-        dir.setNumberOfFiles(numberOfFiles);
-
-        dir.setPath(selectedDir.getAbsolutePath());
-
-        directoryList.add(dir);
-
-        tableView.setItems(directoryList);
+        tableView.setItems(this.files);
     }
 
     @FXML
     private void initialize() {
-        TableColumn<Directory, String> nameColumn = new TableColumn<>("Name");
+        TableColumn<File, String> nameColumn = new TableColumn<>("Name");
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
 
-        TableColumn<Directory, Integer> numberOfFilesColumn = new TableColumn<>("Number of Files");
-        numberOfFilesColumn.setCellValueFactory(new PropertyValueFactory<>("numberOfFiles"));
-
-        tableView.getColumns().addAll(nameColumn, numberOfFilesColumn);
+        tableView.getColumns().addAll(nameColumn);
 
         this.outputPath.setText(config.OUTPUT_PATH);
     }
@@ -94,14 +74,11 @@ public class ProspectViewController {
         int newRowNum = 0;
         boolean headerAdded = false;
 
-        for (Directory dir : directoryList) {
-            File[] excelFiles = new File(dir.getPath())
-                    .listFiles(file -> file.isFile() && file.getName().toLowerCase().endsWith(".xlsx"));
-
-            if (excelFiles != null && Arrays.stream(excelFiles).findAny().isPresent()) {
+        for (File file : files) {
+            if (file.getName().toLowerCase().endsWith(".xlsx")) {
 
                 if (!headerAdded) {
-                    try (Workbook workbook = WorkbookFactory.create(excelFiles[0])) {
+                    try (Workbook workbook = WorkbookFactory.create(file)) {
                         Sheet sheet = workbook.getSheetAt(0);
 
                         Row headerRow = sheet.getRow(0);
@@ -136,55 +113,53 @@ public class ProspectViewController {
                     }
                 }
 
-                for (File excelFile : excelFiles) {
-                    try (Workbook workbook = WorkbookFactory.create(excelFile)) {
-                        Sheet sheet = workbook.getSheetAt(0);
+                try (Workbook workbook = WorkbookFactory.create(file)) {
+                    Sheet sheet = workbook.getSheetAt(0);
 
-                        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-                            Row row = sheet.getRow(rowIndex);
-                            if (row != null) {
-                                Cell cell = row.getCell(6);
-                                if (cell != null && cell.getCellType() == CellType.STRING) {
-                                    String value = cell.getStringCellValue();
-                                    if ("CB".equalsIgnoreCase(value) || "PR".equalsIgnoreCase(value)) {
-                                        Row newRow = newSheet.createRow(newRowNum++);
-                                        for (int i = 0; i < 10; i++) {
-                                            Cell oldCell = row.getCell(i);
-                                            Cell newCell = newRow.createCell(i);
-                                            if (oldCell != null) {
-                                                switch (oldCell.getCellType()) {
-                                                    case STRING:
-                                                        newCell.setCellValue(oldCell.getStringCellValue());
-                                                        break;
-                                                    case NUMERIC:
-                                                        newCell.setCellValue(oldCell.getNumericCellValue());
-                                                        break;
-                                                    case BOOLEAN:
-                                                        newCell.setCellValue(oldCell.getBooleanCellValue());
-                                                        break;
-                                                    case FORMULA:
-                                                        newCell.setCellFormula(oldCell.getCellFormula());
-                                                        break;
-                                                    default:
-                                                        break;
-                                                }
-
-                                                CellStyle oldCellStyle = oldCell.getCellStyle();
-                                                CellStyle newCellStyle = newWorkbook.createCellStyle();
-                                                newCellStyle.cloneStyleFrom(oldCellStyle);
-                                                newCell.setCellStyle(newCellStyle);
+                    for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+                        Row row = sheet.getRow(rowIndex);
+                        if (row != null) {
+                            Cell cell = row.getCell(6);
+                            if (cell != null && cell.getCellType() == CellType.STRING) {
+                                String value = cell.getStringCellValue();
+                                if ("CB".equalsIgnoreCase(value) || "PR".equalsIgnoreCase(value)) {
+                                    Row newRow = newSheet.createRow(newRowNum++);
+                                    for (int i = 0; i < 10; i++) {
+                                        Cell oldCell = row.getCell(i);
+                                        Cell newCell = newRow.createCell(i);
+                                        if (oldCell != null) {
+                                            switch (oldCell.getCellType()) {
+                                                case STRING:
+                                                    newCell.setCellValue(oldCell.getStringCellValue());
+                                                    break;
+                                                case NUMERIC:
+                                                    newCell.setCellValue(oldCell.getNumericCellValue());
+                                                    break;
+                                                case BOOLEAN:
+                                                    newCell.setCellValue(oldCell.getBooleanCellValue());
+                                                    break;
+                                                case FORMULA:
+                                                    newCell.setCellFormula(oldCell.getCellFormula());
+                                                    break;
+                                                default:
+                                                    break;
                                             }
-                                        }
 
-                                        Cell baseFileCell = newRow.createCell(10);
-                                        baseFileCell.setCellValue(excelFile.getName());
+                                            CellStyle oldCellStyle = oldCell.getCellStyle();
+                                            CellStyle newCellStyle = newWorkbook.createCellStyle();
+                                            newCellStyle.cloneStyleFrom(oldCellStyle);
+                                            newCell.setCellStyle(newCellStyle);
+                                        }
                                     }
+
+                                    Cell baseFileCell = newRow.createCell(10);
+                                    baseFileCell.setCellValue(file.getName());
                                 }
                             }
                         }
-                    } catch (IOException | EncryptedDocumentException ex) {
-                        ex.printStackTrace();
                     }
+                } catch (IOException | EncryptedDocumentException ex) {
+                    ex.printStackTrace();
                 }
             }
         }
@@ -193,7 +168,15 @@ public class ProspectViewController {
             newSheet.autoSizeColumn(colIndex);
         }
 
-        try (FileOutputStream outputStream = new FileOutputStream(outputPath.getText() + "/Prospect Sheet.xlsx")) {
+        String resultName;
+        if (additionalText.getText().isEmpty()) {
+            resultName = "/Prospect Sheet -- " + additionalText.getText() + " -- " + (LocalDateTime.now().toString().replace(':', '@')) + ".xlsx";
+        } else {
+            resultName = "/Prospect Sheet -- " + (LocalDateTime.now().toString().replace(':', '@')) + ".xlsx";
+        }
+
+
+        try (FileOutputStream outputStream = new FileOutputStream(outputPath.getText() + resultName)) {
             newWorkbook.write(outputStream);
             newWorkbook.close();
 
@@ -211,27 +194,15 @@ public class ProspectViewController {
         }
     }
 
-    public void onAddFolder(ActionEvent e) {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Select a Directory");
+    public void onAddFiles(ActionEvent e) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select Excel Files");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
 
-        File selectedDirectory = directoryChooser.showDialog(primaryStage);
+        List<File> selectedFiles = fileChooser.showOpenMultipleDialog(primaryStage);
 
-        if (selectedDirectory != null) {
-            try {
-                Directory newDir = new Directory();
-                newDir.setName(selectedDirectory.getName());
-
-                int numberOfFiles = (int) Files.list(selectedDirectory.toPath())
-                        .filter(path -> path.toString().toLowerCase().endsWith(".xlsx"))
-                        .count();
-                newDir.setNumberOfFiles(numberOfFiles);
-
-                newDir.setPath(selectedDirectory.getAbsolutePath());
-                directoryList.add(newDir);
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
+        if (selectedFiles != null) {
+            this.files.addAll(selectedFiles);
         }
     }
 
@@ -246,5 +217,4 @@ public class ProspectViewController {
             this.config.save();
         }
     }
-
 }
